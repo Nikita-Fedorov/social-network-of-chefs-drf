@@ -10,10 +10,10 @@ router.register(
     basename='subscriptions'
 )
 
+
 urlpatterns = [
     path('', include(router.urls)),
     re_path(r'^auth/', include('djoser.urls.authtoken')),
     path('', include('djoser.urls')),
-    # path('users/subscriptions/', SubscriptionsView.as_view(), name='subscriptions'),
     path('users/<int:pk>/subscribe/', SubscribeView.as_view(), name='subscribe'),
 ]

@@ -1,22 +1,27 @@
+from django.db.models import Exists, F, OuterRef, Sum, Prefetch
 from django.shortcuts import get_object_or_404
-from django.db.models import F, Sum
-from django.db.models.expressions import Exists, OuterRef, Value
-
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework import viewsets, status
-from recipe.models import Ingredient, Tag, Recipe, Favorite, ShoppingCart, RecipeIngredient
-from api.serializers import (IngredientSerializer, TagSerializers,
-                             RecipeReadSerializer, RecipeWriteSerializer,
-                             FavoriteSerializer, ShoppingCartSerializer)
+from rest_framework.filters import OrderingFilter
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
+from api.pagination import RecipePagination
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             RecipeReadSerializer, RecipeWriteSerializer,
+                             TagSerializers)
 
 
 class IngridientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -28,7 +33,13 @@ class TagViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeReadSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    pagination_class = RecipePagination
+    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = RecipeFilter
+
+    ordering_fields = ('name')
+    ordering = ('-id',)
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -44,9 +55,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         if self.request.user.is_authenticated:
             recipes = recipes.annotate(
-                is_favorited=Exists(Favorite.objects.filter(user=self.request.user, recipe=OuterRef('pk'))),
-                is_in_shopping_cart=Exists(ShoppingCart.objects.filter(user=self.request.user, recipes=OuterRef('pk')))
+                is_favorited=Exists(Favorite.objects.filter(
+                    user=self.request.user.id,
+                    recipe=OuterRef('pk')
+                    )
+                ),
+                is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
+                    user=self.request.user.id,
+                    recipes__pk=OuterRef('pk')
+                    )
+                )
             )
+        else:
+            recipes
 
         return recipes
 
@@ -57,7 +78,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             detail=True, permission_classes=[IsAuthenticated]
             )
     def favorite(self, request, pk):
-        user = request.user
+        user = request.user.id
         recipe = get_object_or_404(Recipe, pk=pk)
         favorite, created = Favorite.objects.get_or_create(
             user=user,
@@ -72,7 +93,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data,
                                 status=status.HTTP_201_CREATED
                                 )
-            return Response({"detail": "Рецепт уже в избранном."},
+            return Response({'message': "Рецепт уже в избранном!"},
                             status=status.HTTP_400_BAD_REQUEST
                             )
 
@@ -91,13 +112,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         obj_exists = ShoppingCart.objects.filter(
-            user=request.user, recipes=recipe
+            user=request.user.id, recipes=recipe
             ).exists()
 
         if request.method == 'POST':
             if obj_exists:
                 return Response(
-                    {'message': 'Рецепт уже находится в списке покупок'},
+                    {'message': 'Рецепт уже находится в списке покупок!'},
                     status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -114,20 +135,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                     )
 
-            ShoppingCart.objects.get(user=request.user, recipes=recipe).delete()
+            ShoppingCart.objects.get(user=request.user.id,
+                                     recipes=recipe).delete()
             return Response(
                 {'message': 'Рецепт удален из списка покупок'},
                 status=status.HTTP_204_NO_CONTENT
                 )
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = request.user
+        user = request.user.id
         shopping_cart = ShoppingCart.objects.filter(user=user)
         recipes_in_shopping_cart = [item.recipes for item in shopping_cart]
 
-        # Получаем информацию о продуктах в рецептах
-        ingredients_info = RecipeIngredient.objects.filter(recipe__in=recipes_in_shopping_cart)
+        ingredients_info = RecipeIngredient.objects.filter(
+            recipe__in=recipes_in_shopping_cart
+            )
         ingredients_info = ingredients_info.values(
             'ingredient__name',
             'ingredient__measurement_unit'
@@ -137,14 +161,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             total=Sum('amount')
         ).order_by('-name')
 
-        # Формируем текстовую строку
-        text = 'Список покупок:\n\n' + '\n'.join([
-            f"{food['name']} нужно {food['total']} {food['measur_units']}"
+        text = 'Список покупок:' + ' '.join([
+            f"{food['name']} {food['total']} {food['measur_units']}."
             for food in ingredients_info
         ])
 
-        # Создаем HTTP-ответ
         response = Response(text, content_type='application/txt')
-        response['Content-Disposition'] = 'attachment; filename="shopping_cart.txt"'
-
+        response['Content-Disposition'] = (
+            'attachment; '
+            'filename="shopping_cart.txt"'
+        )
         return response

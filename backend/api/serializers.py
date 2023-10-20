@@ -1,9 +1,10 @@
 import base64
-
 from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
+# from django.shortcuts import get_object_or_404
 
-from recipe.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorite, ShoppingCart
+from recipe.models import (Ingredient, Recipe,
+                           RecipeIngredient, Tag,
+                           Favorite, ShoppingCart)
 from users.serializers import UserSerializer
 from rest_framework import serializers
 
@@ -70,9 +71,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                                              )
     tags = TagSerializers(many=True)
     image = Base64ImageField(required=False)
-    is_favorited = serializers.SerializerMethodField(read_only=True,
-                                                     default=False
-                                                     )
+    is_favorited = serializers.BooleanField(read_only=True,
+                                            default=False
+                                            )
     is_in_shopping_cart = serializers.BooleanField(read_only=True,
                                                    default=False
                                                    )
@@ -90,22 +91,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'text',
                   'cooking_time')
 
-    def get_is_favorited(self, obj):
-        request = self.context['request']
-        if not request or request.user.is_anonymous:
-            return False
-        return Favorite.objects.filter(
-            user=self.context['request'].user, recipe__id=obj.id
-        ).exists()
-
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated and ShoppingCart.objects.filter(
-            user=user, recipe=obj
-        ).exists():
-            return True
-        return False
-
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
@@ -116,14 +101,54 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField(required=False, allow_null=True)
 
+    def validate(self, data):
+
+        if self.context['request'].method == 'POST':
+            name = data.get('name')
+            author = self.context['request'].user
+            if Recipe.objects.filter(name=name, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже создали рецепт с таким названием!',
+                )
+
+        ingredients = data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Рецепт нельзя создать без ингредиентов!',
+            )
+        names = []
+        for ingredient in ingredients:
+            ingredient_data = ingredient.get('ingredient')
+            if ingredient_data:
+                ingredient_obj = ingredient_data.get('id')
+                if ingredient_obj:
+                    ingredient_name = ingredient_obj.get('name')
+                    if ingredient_name:
+                        names.append(ingredient_name)
+
+        if len(names) != len(set(names)):
+            raise serializers.ValidationError(
+                'Ингредиенты не могут повторяться!'
+            )
+
+        tags = data.get('tags')
+        if not tags:
+            raise serializers.ValidationError(
+                'Рецепту нужен хотя бы один тег!'
+            )
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги должны быть уникальными!'
+            )
+
+        return data
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
 
-        # Создаем новый рецепт, используя оставшиеся данные
         recipe = Recipe.objects.create(**validated_data)
 
-        # Создаем связи между рецептом и ингредиентами
         for ingredient_data in ingredients_data:
             RecipeIngredient.objects.bulk_create(
                 [RecipeIngredient(
@@ -132,97 +157,29 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     amount=ingredient_data.get('amount'))]
             )
 
-        # Добавляем теги к рецепту
         recipe.tags.set(tags_data)
 
         return recipe
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.image = validated_data.get('image', instance.image)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        instance.tags.clear()
+        ingredients_data = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
 
-        # Обновление ингредиентов
-        ingredients_data = validated_data.get('ingredients')
-        if ingredients_data:
-            instance.ingredients.clear()  # Удалить все существующие ингредиенты
-            for ingredient_data in ingredients_data:
-                ingredient_id = ingredient_data.get('id')
-                amount = ingredient_data.get('amount')
-                ingredient = Ingredient.objects.get(id=ingredient_id)
-                RecipeIngredient.objects.create(
-                    recipe=instance,
-                    ingredient=ingredient,
-                    amount=amount
-                )
+        new_ingredients = [
+            RecipeIngredient(
+                recipe=instance,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
+            )
+            for ingredient in ingredients_data
+        ]
 
-        # Обновление тегов
-        tags_data = validated_data.get('tags')
-        if tags_data:
-            instance.tags.set(tags_data)
+        RecipeIngredient.objects.bulk_create(new_ingredients)
+        instance.tags.set(tags)
 
-        instance.save()
-        return instance
-
-    # def update(self, instance, validated_data):
-    #     instance.name = validated_data.get('name', instance.name)
-    #     instance.image = validated_data.get('image', instance.image)
-    #     instance.text = validated_data.get('text', instance.text)
-    #     instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
-
-    #     # Обновление ингредиентов
-    #     ingredients_data = validated_data.get('ingredients')
-    #     if ingredients_data:
-    #         updated_ingredients = []  # Для отслеживания обновленных ингредиентов
-    #         for ingredient_data in ingredients_data:
-    #             ingredient = ingredient_data.get('ingredient')
-    #             amount = ingredient_data.get('amount')
-    #             existing_ingredient, created = RecipeIngredient.objects.get_or_create(
-    #                 recipe=instance,
-    #                 ingredient=ingredient,
-    #                 defaults={'amount': amount}
-    #             )
-    #             if not created:
-    #                 # Если ингредиент существует, обновляем его количество
-    #                 existing_ingredient.amount = amount
-    #                 existing_ingredient.save()
-    #             updated_ingredients.append(existing_ingredient)
-
-    #         # Удаляем устаревшие ингредиенты, которые не были обновлены
-    #         instance.ingredients.exclude(id__in=[ingredient.id for ingredient in updated_ingredients]).delete()
-
-    #     # Обновление тегов
-    #     tags_data = validated_data.get('tags')
-    #     if tags_data:
-    #         instance.tags.set(tags_data)
-
-    #     instance.save()
-    #     return instance
-
-    # def update(self, instance, validated_data):
-    #     instance.name = validated_data.get('name', instance.name)
-    #     instance.image = validated_data.get('image', instance.image)
-    #     instance.text = validated_data.get('text', instance.text)
-    #     instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
-
-    #     # Обновление ингредиентов
-    #     ingredients_data = validated_data.get('ingredients')
-    #     if ingredients_data:
-    #         for ingredient_data in ingredients_data:
-    #             ingredient, created = RecipeIngredient.objects.get_or_create(
-    #                 recipe=instance,
-    #                 ingredient=ingredient_data.get('ingredient'),
-    #                 defaults={'amount': ingredient_data.get('amount')}
-    #             )
-
-    #     # Обновление тегов
-    #     tags_data = validated_data.get('tags')
-    #     if tags_data:
-    #         instance.tags.set(tags_data)
-
-    #     instance.save()
-    #     return instance
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         return RecipeReadSerializer(
@@ -255,9 +212,3 @@ class FavoriteSerializer(serializers.ModelSerializer):
             instance.recipe,
             context={'request': self.context['request']}
         ).data
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShoppingCart
-        fields = '__all__'

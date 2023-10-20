@@ -1,14 +1,8 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from users.models import Follow, User
 from recipe.models import Recipe
-
-
-def validate_me(value):
-    if value == 'me':
-        raise serializers.ValidationError(
-            'Нельзя использовать username "me"'
-        )
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -26,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        user = self.context['request'].user
+        user = self.context['request'].user.id
         return Follow.objects.filter(user=user, author=obj).exists()
 
 
@@ -36,7 +30,22 @@ class FollowSerializer(serializers.ModelSerializer):
         fields = ('user', 'following')
 
     def validate(self, data):
-        pass
+        if self.context['request'].method == 'POST':
+            author_id = self.context.get('view').kwargs.get('user_id')
+            author = get_object_or_404(User, pk=author_id)
+            user = self.context['request'].user
+
+            if user == author:
+                raise serializers.ValidationError(
+                    'Нельзя подписаться на самого себя!'
+                )
+
+            if Follow.objects.filter(follower=user, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на этого автора!'
+                )
+
+            return data
 
     def to_representation(self, instance):
         return super().to_representation(instance)
@@ -84,6 +93,4 @@ class UserMeSerializer(UserSerializer):
     class Meta:
         model = User
         fields = UserSerializer.Meta.fields
-        read_only_fields = (
-            'is_subscribed',
-        )
+        read_only_fields = ('is_subscribed',)
