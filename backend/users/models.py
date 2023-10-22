@@ -34,7 +34,7 @@ class User(AbstractUser):
         validators=[
             RegexValidator(r'^[\w.@+-]+\Z'),
         ],
-        )
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ["first_name", "last_name", "username"]

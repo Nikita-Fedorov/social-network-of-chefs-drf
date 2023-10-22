@@ -59,4 +59,4 @@ class SubscribeView(APIView):
             return Response(
                 {'Ошибка отписки: пользователь не был подписан'},
                 status=status.HTTP_400_BAD_REQUEST
-                )
+            )

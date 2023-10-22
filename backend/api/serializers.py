@@ -1,6 +1,5 @@
 import base64
 from django.core.files.base import ContentFile
-# from django.shortcuts import get_object_or_404
 
 from recipe.models import (Ingredient, Recipe,
                            RecipeIngredient, Tag,
@@ -31,7 +30,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 class IngredientRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
-        )
+    )
     amount = serializers.IntegerField(default=1)
 
     class Meta:
@@ -44,7 +43,7 @@ class IngredientCreateSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
-        )
+    )
 
     class Meta:
         fields = ('id',
@@ -102,7 +101,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False, allow_null=True)
 
     def validate(self, data):
-
         if self.context['request'].method == 'POST':
             name = data.get('name')
             author = self.context['request'].user

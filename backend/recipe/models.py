@@ -67,12 +67,12 @@ class Favorite(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='users_favorite'
-        )
+    )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='favorite'
-        )
+    )
 
     class Meta:
         constraints = [

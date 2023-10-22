@@ -60,13 +60,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 is_favorited=Exists(Favorite.objects.filter(
                     user=self.request.user,
                     recipe=OuterRef('pk')
-                    )
-                ),
+                )),
                 is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
                     user=self.request.user,
                     recipes__pk=OuterRef('pk')
-                    )
-                )
+                ))
             )
 
         return recipes
@@ -83,7 +81,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         favorite, created = Favorite.objects.get_or_create(
             user=user,
             recipe=recipe
-            )
+        )
 
         if request.method == 'POST':
             if created:
@@ -113,34 +111,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         obj_exists = ShoppingCart.objects.filter(
             user=request.user.id, recipes=recipe
-            ).exists()
+        ).exists()
 
         if request.method == 'POST':
             if obj_exists:
                 return Response(
                     {'message': 'Рецепт уже находится в списке покупок!'},
                     status=status.HTTP_400_BAD_REQUEST
-                    )
+                )
 
             ShoppingCart.objects.create(user=request.user, recipes=recipe)
             return Response(
                 {'message': 'Рецепт добавлен в список покупок'},
                 status=status.HTTP_201_CREATED
-                )
+            )
 
         if request.method == 'DELETE':
             if not obj_exists:
                 return Response(
                     {'message': 'Рецепт уже удален из списка покупок'},
                     status=status.HTTP_400_BAD_REQUEST
-                    )
+                )
 
             ShoppingCart.objects.get(user=request.user,
                                      recipes=recipe).delete()
             return Response(
                 {'message': 'Рецепт удален из списка покупок'},
                 status=status.HTTP_204_NO_CONTENT
-                )
+            )
 
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
@@ -151,7 +149,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         ingredients_info = RecipeIngredient.objects.filter(
             recipe__in=recipes_in_shopping_cart
-            )
+        )
         ingredients_info = ingredients_info.values(
             'ingredient__name',
             'ingredient__measurement_unit'
