@@ -100,6 +100,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField(required=False, allow_null=True)
 
+    # flake8: noqa: C901
     def validate(self, data):
         if self.context['request'].method == 'POST':
             name = data.get('name')

@@ -28,7 +28,7 @@ class TagInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAmdin(BaseAdmin):
-    inlines = [IngredientInline, TagInline,]
+    inlines = [IngredientInline, TagInline, ]
     list_display = (
         'id',
         'author',
