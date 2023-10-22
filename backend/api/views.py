@@ -1,4 +1,5 @@
-from django.db.models import Exists, F, OuterRef, Sum, Prefetch
+from django.db.models import Exists, F, OuterRef, Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
@@ -6,7 +7,8 @@ from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
@@ -56,18 +58,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             recipes = recipes.annotate(
                 is_favorited=Exists(Favorite.objects.filter(
-                    user=self.request.user.id,
+                    user=self.request.user,
                     recipe=OuterRef('pk')
                     )
                 ),
                 is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
-                    user=self.request.user.id,
+                    user=self.request.user,
                     recipes__pk=OuterRef('pk')
                     )
                 )
             )
-        else:
-            recipes
 
         return recipes
 
@@ -78,7 +78,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             detail=True, permission_classes=[IsAuthenticated]
             )
     def favorite(self, request, pk):
-        user = request.user.id
+        user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         favorite, created = Favorite.objects.get_or_create(
             user=user,
@@ -135,7 +135,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                     )
 
-            ShoppingCart.objects.get(user=request.user.id,
+            ShoppingCart.objects.get(user=request.user,
                                      recipes=recipe).delete()
             return Response(
                 {'message': 'Рецепт удален из списка покупок'},
@@ -145,7 +145,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = request.user.id
+        user = request.user
         shopping_cart = ShoppingCart.objects.filter(user=user)
         recipes_in_shopping_cart = [item.recipes for item in shopping_cart]
 
@@ -161,12 +161,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             total=Sum('amount')
         ).order_by('-name')
 
-        text = 'Список покупок:' + ' '.join([
-            f"{food['name']} {food['total']} {food['measur_units']}."
+        text = 'Список покупок:\n\n' + '\n'.join([
+            (f"{food['name']} — {food['total']} {food['measur_units']}")
             for food in ingredients_info
         ])
 
-        response = Response(text, content_type='application/txt')
+        response = HttpResponse(text, content_type='application/txt')
         response['Content-Disposition'] = (
             'attachment; '
             'filename="shopping_cart.txt"'

@@ -7,4 +7,3 @@ psycopg2-binary==2.9.3
 djoser==2.1.0
 sorl-thumbnail==12.9.0
 Pillow==9.0.0
-# drf-extra-fields==3.7.0

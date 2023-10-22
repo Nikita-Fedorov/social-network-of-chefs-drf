@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 
 from recipe.models import (Ingredient, Recipe,
                            RecipeIngredient, Tag,
-                           Favorite, ShoppingCart)
+                           Favorite)
 from users.serializers import UserSerializer
 from rest_framework import serializers
 
