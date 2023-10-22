@@ -19,7 +19,7 @@ services:
     depends_on:
         - db
     volumes:
-        - static:/app/static
+        - static:/app/backend_static
         - media:/app/media
 
   frontend:
@@ -38,8 +38,5 @@ services:
     ports:
         - "8080:80"
     volumes:
-        # - ./nginx.conf:/etc/nginx/conf.d/default.conf
-        # - static:/usr/share/nginx/html/
-        # - ../docs/:/usr/share/nginx/html/api/docs/
-        - static:/static
+        - static:/var/html/static
         - media:/media
