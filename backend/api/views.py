@@ -60,7 +60,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     )),
                 is_in_shopping_cart=Exists(
                     self.request.user.shopping_cart.filter(
-                        in_shopping_cart__pk=OuterRef('pk')
+                        recipes__pk=OuterRef('pk')
                         ))
             )
 
