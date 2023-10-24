@@ -31,8 +31,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
-            author_id = self.context.get('view').kwargs.get('pk')
-            author = get_object_or_404(User, pk=author_id)
+            author = data.get('author')
             user = self.context['request'].user
 
             if user == author:
