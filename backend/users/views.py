@@ -20,7 +20,10 @@ class SubscribeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        serializer = FollowSerializer(data={}, context={'request': request})
+        serializer = FollowSerializer(
+            data={'user': request.user.id, 'author': pk},
+            context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save(follower=request.user, author_id=pk)
         return Response(UserSerializer(
