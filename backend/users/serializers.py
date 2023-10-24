@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
-        fields = ('user', 'following')
+        fields = ('user', 'author')
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
