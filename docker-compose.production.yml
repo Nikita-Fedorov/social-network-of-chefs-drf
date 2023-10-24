@@ -19,8 +19,8 @@ services:
     depends_on:
         - db
     volumes:
-        - static:/app/backend_static
-        - media:/app/media
+        - static:/app/backend_static/
+        - media:/app/media/
 
   frontend:
     image: nikvf/foodgram_frontend
