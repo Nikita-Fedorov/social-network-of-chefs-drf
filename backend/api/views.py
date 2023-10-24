@@ -40,9 +40,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = RecipeFilter
 
-    ordering_fields = ('name')
-    ordering = ('-id',)
-
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipeReadSerializer
@@ -57,14 +54,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         if self.request.user.is_authenticated:
             recipes = recipes.annotate(
-                is_favorited=Exists(Favorite.objects.filter(
-                    user=self.request.user,
-                    recipe=OuterRef('pk')
-                )),
-                is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
-                    user=self.request.user,
-                    recipes__pk=OuterRef('pk')
-                ))
+                is_favorited=Exists(
+                    self.request.user.users_favorite.filter(
+                        recipe=OuterRef('pk')
+                    )),
+                is_in_shopping_cart=Exists(
+                    self.request.user.shopping_cart.filter(
+                        in_shopping_cart__pk=OuterRef('pk')
+                        ))
             )
 
         return recipes
@@ -91,7 +88,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data,
                                 status=status.HTTP_201_CREATED
                                 )
-            return Response({'message': "Рецепт уже в избранном!"},
+            return Response({'message': 'Рецепт уже в избранном!'},
                             status=status.HTTP_400_BAD_REQUEST
                             )
 
@@ -109,8 +106,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        obj_exists = ShoppingCart.objects.filter(
-            user=request.user.id, recipes=recipe
+        obj_exists = request.user.shopping_cart.filter(
+            in_shopping_cart=recipe
         ).exists()
 
         if request.method == 'POST':
@@ -144,7 +141,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_cart = ShoppingCart.objects.filter(user=user)
+        shopping_cart = user.shopping_cart.all()
         recipes_in_shopping_cart = [item.recipes for item in shopping_cart]
 
         ingredients_info = RecipeIngredient.objects.filter(

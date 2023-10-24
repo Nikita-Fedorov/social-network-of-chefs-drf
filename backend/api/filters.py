@@ -1,6 +1,7 @@
 from django_filters import (FilterSet, CharFilter,
                             ModelChoiceFilter, ModelMultipleChoiceFilter,
                             ChoiceFilter)
+
 from recipe.models import Ingredient, Recipe, Tag
 from users.models import User
 
@@ -42,12 +43,10 @@ class RecipeFilter(FilterSet):
         user = self.request.user
         if user.is_authenticated and value:
             return queryset.filter(favorite__user=user)
-        else:
-            return queryset
+        return queryset
 
     def get_filter_shopping_cart(self, queryset, name, value):
         user = self.request.user
         if user.is_authenticated and value:
             return queryset.filter(added_to_shopping_cart__user=user)
-        else:
-            return queryset
+        return queryset
