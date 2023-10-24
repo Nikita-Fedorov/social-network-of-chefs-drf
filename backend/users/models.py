@@ -67,3 +67,8 @@ class Follow(models.Model):
                 fields=['user', 'author']
             ),
         ]
+
+    def __str__(self):
+        return '{} подписан на {}'.format(
+            self.user, self.author
+        )

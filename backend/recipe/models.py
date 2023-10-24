@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from colorfield.fields import ColorField
 from sorl.thumbnail import ImageField
 
@@ -74,8 +75,10 @@ class Recipe(models.Model):
         verbose_name='Текст'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        max_value=MAX_COOKING_TIME,
-        min_value=MIN_COOKING_TIME,
+        validators=[
+            MinValueValidator(limit_value=MIN_COOKING_TIME),
+            MaxValueValidator(limit_value=MAX_COOKING_TIME)
+        ],
         verbose_name='Время приготовления'
     )
     ingredients = models.ManyToManyField(
@@ -111,8 +114,10 @@ class RecipeIngredient(models.Model):
         verbose_name='Ингредиент'
     )
     amount = models.PositiveSmallIntegerField(
-        max_value=MAX_COOKING_TIME,
-        min_value=MIN_COOKING_TIME,
+        validators=[
+            MinValueValidator(limit_value=MIN_COOKING_TIME),
+            MaxValueValidator(limit_value=MAX_COOKING_TIME)
+        ],
         verbose_name='Количество ингредиента'
     )
 
