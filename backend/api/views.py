@@ -107,7 +107,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         obj_exists = request.user.shopping_cart.filter(
-            in_shopping_cart=recipe
+            recipes=recipe
         ).exists()
 
         if request.method == 'POST':
