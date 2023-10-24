@@ -25,7 +25,7 @@ class SubscribeView(APIView):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(follower=request.user, author_id=pk)
+        serializer.save()
         return Response(UserSerializer(
             get_object_or_404(User, pk=pk),
             context={'request': request}).data,
