@@ -27,7 +27,7 @@ services:
     depends_on:
         - backend
     volumes:
-        - ../frontend/build/:/app/result_build/
+        - static:/app/result_build/
 
   nginx:
     image: nikvf/foodgram_gateway
@@ -39,4 +39,4 @@ services:
     volumes:
         - static:/var/html/backend_static/
         - media:/var/html/media/
-        - ../frontend/build/:/usr/share/nginx/html/
+        - static:/usr/share/nginx/html/
