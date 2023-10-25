@@ -16,8 +16,8 @@ services:
   backend:
     image: nikvf/foodgram_backend
     env_file: .env
-    depends_on:
-        - db
+    # depends_on:
+    #     - db
     volumes:
         - static:/app/static/
         - media:/app/media/
