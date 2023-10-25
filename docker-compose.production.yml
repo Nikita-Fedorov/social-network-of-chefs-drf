@@ -38,6 +38,6 @@ services:
     ports:
         - '8080:80'
     volumes:
-        - static:/var/html/static/
+        - static:/var/html/backend_static/
         - media:/var/html/media/
         - ../frontend/build:/usr/share/nginx/html/
