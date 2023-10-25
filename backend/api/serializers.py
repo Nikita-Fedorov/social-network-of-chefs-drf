@@ -120,26 +120,26 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 )
             return data
 
-    def validate_ingredients(self, data):
-        if self.context['request'].method == 'POST':
-            ingredients = data.get('ingredient_id')
-            if not ingredients:
-                raise serializers.ValidationError(
-                    'Рецепт нельзя создать без ингредиентов!',
-                )
-            names = []
-            for ingredient in ingredients:
-                ingredient_name = ingredient.get('ingredient', {}
-                                                 ).get('id', {}
-                                                       ).get('name')
-                if ingredient_name:
-                    names.append(ingredient_name)
+    # def validate_ingredients(self, data):
+    #     if self.context['request'].method == 'POST':
+    #         ingredients = data.get('ingredient_id')
+    #         if not ingredients:
+    #             raise serializers.ValidationError(
+    #                 'Рецепт нельзя создать без ингредиентов!',
+    #             )
+    #         names = []
+    #         for ingredient in ingredients:
+    #             ingredient_name = ingredient.get('ingredient', {}
+    #                                              ).get('id', {}
+    #                                                    ).get('name')
+    #             if ingredient_name:
+    #                 names.append(ingredient_name)
 
-            if len(names) != len(set(names)):
-                raise serializers.ValidationError(
-                    'Ингредиенты не могут повторяться!'
-                )
-            return data
+    #         if len(names) != len(set(names)):
+    #             raise serializers.ValidationError(
+    #                 'Ингредиенты не могут повторяться!'
+    #             )
+    #         return data
 
     def validate_tags(self, data):
         if self.context['request'].method == 'POST':
