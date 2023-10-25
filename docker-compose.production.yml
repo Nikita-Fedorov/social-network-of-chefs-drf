@@ -38,5 +38,5 @@ services:
     ports:
         - '8080:80'
     volumes:
-        - static:/usr/share/nginx/html/
-        - media:/media
+        - static:/var/html/static/
+        - media:/var/html/media/
