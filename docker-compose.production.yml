@@ -1,7 +1,6 @@
 version: '3'
 
 volumes:
-  static_frontend:
   static:
   media:
   postgres_data:
@@ -27,9 +26,8 @@ services:
     image: nikvf/foodgram_frontend
     depends_on:
         - backend
-    command: cp -r /app/build/. /frontend_static/
     volumes:
-        - static_frontend:/frontend_static/
+        - ../frontend/build/:/app/result_build/
 
   nginx:
     image: nikvf/foodgram_gateway
@@ -39,6 +37,6 @@ services:
     ports:
         - '8080:80'
     volumes:
-        - static_frontend:/usr/share/nginx/html/
         - static:/var/html/backend_static/
         - media:/var/html/media/
+        - ../frontend/build/:/usr/share/nginx/html/
