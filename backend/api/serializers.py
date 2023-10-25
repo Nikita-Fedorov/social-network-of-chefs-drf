@@ -110,50 +110,48 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField(required=False, allow_null=True)
 
-    # def validate_recipe(self, data):
-    #     if self.context['request'].method == 'POST':
-    #         name = data.get('name')
-    #         author = self.context['request'].user
-    #         if author.recipes.filter(name=name).exists():
-    #             raise serializers.ValidationError(
-    #                 'Вы уже создали рецепт с таким названием!',
-    #             )
-            # return data
+    def validate_recipe(self, data):
+        if self.context['request'].method == 'POST':
+            name = data.get('name')
+            author = self.context['request'].user
+            if author.recipes.filter(name=name).exists():
+                raise serializers.ValidationError(
+                    'Вы уже создали рецепт с таким названием!',
+                )
+            return data
 
-    # def validate_ingredients(self, data):
-    #     if self.context['request'].method == 'POST':
-    #         ingredients = data.get('ingredient_id')
-    #         if not ingredients:
-    #             raise serializers.ValidationError(
-    #                 'Рецепт нельзя создать без ингредиентов!',
-    #             )
-    #         names = []
-    #         for ingredient in ingredients:
-    #             ingredient_name = ingredient.get('ingredient', {}
-    #                                              ).get('id', {}
-    #                                                    ).get('name')
-    #             if ingredient_name:
-    #                 names.append(ingredient_name)
+    def validate_ingredients(self, data):
+        ingredients = data.get('ingredient_id')
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Рецепт нельзя создать без ингредиентов!',
+            )
+        names = []
+        for ingredient in ingredients:
+            ingredient_name = ingredient.get('ingredient', {}
+                                             ).get('id', {}
+                                                   ).get('name')
+            if ingredient_name:
+                names.append(ingredient_name)
 
-    #         if len(names) != len(set(names)):
-    #             raise serializers.ValidationError(
-    #                 'Ингредиенты не могут повторяться!'
-    #             )
-    #         return data
+        if len(names) != len(set(names)):
+            raise serializers.ValidationError(
+                'Ингредиенты не могут повторяться!'
+            )
+        return data
 
-    # def validate_tags(self, data):
-    #     if self.context['request'].method == 'POST':
-    #         tags = data.get('tags')
-    #         if not tags:
-    #             raise serializers.ValidationError(
-    #                 'Рецепту нужен хотя бы один тег!'
-    #             )
-    #         if len(tags) != len(set(tags)):
-    #             raise serializers.ValidationError(
-    #                 'Теги должны быть уникальными!'
-    #             )
+    def validate_tags(self, data):
+        tags = data.get('tags')
+        if not tags:
+            raise serializers.ValidationError(
+                'Рецепту нужен хотя бы один тег!'
+            )
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги должны быть уникальными!'
+            )
 
-    #         return data
+        return data
 
     def create_or_update_ingredients(self, instance, ingredients_data):
 
