@@ -122,7 +122,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, data):
         if self.context['request'].method == 'POST':
-            ingredients = data.get('ingredients')
+            ingredients = data.get('ingredient_id')
             if not ingredients:
                 raise serializers.ValidationError(
                     'Рецепт нельзя создать без ингредиентов!',
