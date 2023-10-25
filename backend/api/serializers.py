@@ -121,7 +121,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             return data
 
     def validate_ingredients(self, data):
-        ingredients = data.get('ingredient', {})
+        ingredients = data.get('ingredient', [])
         if not ingredients:
             raise serializers.ValidationError(
                 'Рецепт нельзя создать без ингредиентов!',
@@ -141,7 +141,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return data
 
     def validate_tags(self, data):
-        tags = data.get('tags', {})
+        tags = data.get('tags', [])
         if not tags:
             raise serializers.ValidationError(
                 'Рецепту нужен хотя бы один тег!'
