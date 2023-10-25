@@ -121,13 +121,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             return data
 
     def validate_ingredients(self, data):
-        ingredients = data.get('ingredient', [])
-        if not ingredients:
+        if not data:
             raise serializers.ValidationError(
-                'Рецепт нельзя создать без ингредиентов!',
+                'Рецепт нельзя создать без ингредиентов!'
             )
         names = []
-        for ingredient in ingredients:
+        for ingredient in data:
             ingredient_name = ingredient.get('ingredient', {}
                                              ).get('id', {}
                                                    ).get('name')
@@ -141,12 +140,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return data
 
     def validate_tags(self, data):
-        tags = data.get('tags', [])
-        if not tags:
+        if not data:
             raise serializers.ValidationError(
                 'Рецепту нужен хотя бы один тег!'
             )
-        if len(tags) != len(set(tags)):
+        if len(data) != len(set(data)):
             raise serializers.ValidationError(
                 'Теги должны быть уникальными!'
             )
