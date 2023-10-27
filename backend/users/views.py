@@ -48,7 +48,7 @@ class SubscribeView(APIView):
                 user_to_modify_serializer.data,
                 status=status.HTTP_204_NO_CONTENT
             )
-        return Response(
-            {'Ошибка отписки: пользователь не был подписан'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # return Response(
+        #     {'Ошибка отписки: пользователь не был подписан'},
+        #     status=status.HTTP_400_BAD_REQUEST
+        # )
