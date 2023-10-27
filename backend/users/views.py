@@ -5,9 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipe.models import Recipe
 from users.models import User
-# from api.serializers import RecipeReadSerializer
 from users.serializers import (UserSerializer, SubscriptionUserSerializer,
                                FollowSerializer)
 
@@ -55,11 +53,3 @@ class SubscribeView(APIView):
             {'Ошибка отписки: пользователь не был подписан'},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class UserRecipesView(ListAPIView):
-    serializer_class = UserSerializer
-
-    def get_queryset(self):
-        user = get_object_or_404(User, pk=self.kwargs['pk'])
-        return User.objects.filter(author=user,)
