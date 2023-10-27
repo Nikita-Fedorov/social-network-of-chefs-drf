@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from users.models import User, Follow
+from users.models import User
 from users.serializers import (UserSerializer,
                                SubscriptionUserSerializer,
                                FollowSerializer)
@@ -33,41 +33,23 @@ class SubscribeView(APIView):
             status=status.HTTP_201_CREATED
         )
 
-    # def delete(self, request, pk):
-    #     user_to_sub = get_object_or_404(User, pk=pk)
-    #     user = request.user
-
-    #     user_follows = user_to_sub.follower.filter(author=user)
-
-    #     if user_follows.exists():
-    #         user_follows.delete()
-    #         user_to_modify_serializer = UserSerializer(
-    #             user_to_sub,
-    #             context={'request': request}
-    #         )
-    #         return Response(
-    #             user_to_modify_serializer.data,
-    #             status=status.HTTP_204_NO_CONTENT
-    #         )
-    #     return Response(
-    #         {'Ошибка отписки: пользователь не был подписан'},
-    #         status=status.HTTP_400_BAD_REQUEST
-    #     )
-
     def delete(self, request, pk):
         user_to_sub = get_object_or_404(User, pk=pk)
         user = request.user
-        if Follow.objects.filter(user=user, author=user_to_sub).exists():
-            Follow.objects.filter(user=user, author=user_to_sub).delete()
+
+        user_follows = user_to_sub.follower.filter(author=user)
+
+        if user_follows.exists():
+            user_follows.delete()
             user_to_modify_serializer = UserSerializer(
                 user_to_sub,
                 context={'request': request}
             )
-            return Response(user_to_modify_serializer.data,
-                            status=status.HTTP_204_NO_CONTENT
-                            )
-        else:
             return Response(
-                {'Ошибка отписки: пользователь не был подписан'},
-                status=status.HTTP_400_BAD_REQUEST
+                user_to_modify_serializer.data,
+                status=status.HTTP_204_NO_CONTENT
             )
+        return Response(
+            {'Ошибка отписки: пользователь не был подписан'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
