@@ -5,7 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from users.models import User
-from users.serializers import (UserSerializer, SubscriptionUserSerializer,
+from users.serializers import (CustomUserSerializer,
+                               SubscriptionUserSerializer,
                                FollowSerializer)
 
 
@@ -26,7 +27,7 @@ class SubscribeView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(UserSerializer(
+        return Response(CustomUserSerializer(
             get_object_or_404(User, pk=pk),
             context={'request': request}).data,
             status=status.HTTP_201_CREATED
@@ -40,7 +41,7 @@ class SubscribeView(APIView):
 
         if user_follows.exists():
             user_follows.delete()
-            user_to_modify_serializer = UserSerializer(
+            user_to_modify_serializer = CustomUserSerializer(
                 user_to_sub,
                 context={'request': request}
             )
