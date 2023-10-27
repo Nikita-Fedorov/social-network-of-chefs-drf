@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from users.models import User
+from users.models import Follow, User
 from users.serializers import (CustomUserSerializer,
                                SubscriptionUserSerializer,
                                FollowSerializer)
@@ -36,20 +36,22 @@ class SubscribeView(APIView):
     def delete(self, request, pk):
         user_to_sub = get_object_or_404(User, pk=pk)
         user = request.user
+        follow_exists = Follow.objects.filter(
+            user=user, author=user_to_sub
+        ).exists()
 
-        user_follows = user_to_sub.follower.filter(author=user)
-
-        if user_follows.exists():
-            user_follows.delete()
-            user_to_modify_serializer = CustomUserSerializer(
+        if follow_exists:
+            Follow.objects.filter(user=user, author=user_to_sub).delete()
+            user_serializer = CustomUserSerializer(
                 user_to_sub,
                 context={'request': request}
             )
             return Response(
-                user_to_modify_serializer.data,
+                user_serializer.data,
                 status=status.HTTP_204_NO_CONTENT
             )
-        return Response(
-            {'Ошибка отписки: пользователь не был подписан'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'Ошибка отписки: пользователь не был подписан'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
