@@ -36,10 +36,11 @@ class SubscribeView(APIView):
     def delete(self, request, pk):
         user_to_sub = get_object_or_404(User, pk=pk)
         user = request.user
-        # user_follows = user_to_sub.follower.filter(author=user)
 
-        if Follow.objects.filter(user=user, author=user_to_sub).exists():
-            Follow.objects.filter(user=user, author=user_to_sub).delete()
+        user_follows = user_to_sub.follower.filter(author=user)
+
+        if user_follows.exists(): 
+            user_follows.delete() 
             user_to_modify_serializer = UserSerializer(
                 user_to_sub,
                 context={'request': request}

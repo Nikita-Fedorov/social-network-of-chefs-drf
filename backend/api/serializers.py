@@ -85,7 +85,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                                                    )
     cooking_time = serializers.IntegerField(
         max_value=settings.MAX_COOKING_TIME,
-        min_value=set.MIN_COOKING_TIME
+        min_value=settings.MIN_COOKING_TIME
     )
 
     class Meta:
