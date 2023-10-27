@@ -96,11 +96,11 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd foodgram
-          sudo docker prune -a
-          sudo docker compose -f docker-compose.production.yml pull
-          sudo docker compose -f docker-compose.production.yml down -v
+          # sudo docker prune -a
+          # sudo docker compose -f docker-compose.production.yml pull
+          sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_ingredients
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+          # sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+          # sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_ingredients
+          # sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
 
