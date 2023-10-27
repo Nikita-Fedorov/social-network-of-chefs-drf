@@ -4,7 +4,7 @@ from users.models import Follow, User
 from recipe.models import Recipe
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -87,8 +87,8 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
         return Follow.objects.filter(user=user, author=obj).exists()
 
 
-class UserMeSerializer(CustomUserSerializer):
+class UserMeSerializer(UserSerializer):
     class Meta:
         model = User
-        fields = CustomUserSerializer.Meta.fields
+        fields = UserSerializer.Meta.fields
         read_only_fields = ('is_subscribed',)
