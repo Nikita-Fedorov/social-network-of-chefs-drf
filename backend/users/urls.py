@@ -1,6 +1,6 @@
 from django.urls import include, path, re_path
 from rest_framework import routers
-from users.views import SubscribeView, SubscribeListViewSet
+from users.views import SubscribeView, SubscribeListViewSet, UserRecipesView
 
 router = routers.DefaultRouter()
 
@@ -18,4 +18,5 @@ urlpatterns = [
     path('users/<int:pk>/subscribe/',
          SubscribeView.as_view(), name='subscribe'
          ),
+    path('users/<int:pk>/', UserRecipesView.as_view(), name='author-detail'),
 ]

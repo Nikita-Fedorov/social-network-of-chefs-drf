@@ -10,6 +10,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
 from api.pagination import RecipePagination
@@ -108,7 +109,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         obj_exists = request.user.shopping_cart.filter(
             recipes=recipe
-        ).exists()
+        ).first()
 
         if request.method == 'POST':
             if obj_exists:
@@ -130,8 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            ShoppingCart.objects.get(user=request.user,
-                                     recipes=recipe).delete()
+            obj_exists.delete()
             return Response(
                 {'message': 'Рецепт удален из списка покупок'},
                 status=status.HTTP_204_NO_CONTENT

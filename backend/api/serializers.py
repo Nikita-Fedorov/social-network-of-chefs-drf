@@ -1,13 +1,12 @@
 import base64
 from django.core.files.base import ContentFile
+from django.conf import settings
 from rest_framework import serializers
-
 
 from recipe.models import (Ingredient, Recipe,
                            RecipeIngredient, Tag,
                            Favorite)
 from users.serializers import UserSerializer
-from backend.settings import MAX_COOKING_TIME, MIN_COOKING_TIME
 
 
 class Base64ImageField(serializers.ImageField):
@@ -33,9 +32,10 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
     )
-    amount = serializers.IntegerField(max_value=MAX_COOKING_TIME,
-                                      min_value=MIN_COOKING_TIME
-                                      )
+    amount = serializers.IntegerField(
+        max_value=settings.MAX_COOKING_TIME,
+        min_value=settings.MIN_COOKING_TIME
+    )
 
     class Meta:
         fields = ('id',
@@ -83,9 +83,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.BooleanField(read_only=True,
                                                    default=False
                                                    )
-    cooking_time = serializers.IntegerField(max_value=MAX_COOKING_TIME,
-                                            min_value=MIN_COOKING_TIME
-                                            )
+    cooking_time = serializers.IntegerField(
+        max_value=settings.MAX_COOKING_TIME,
+        min_value=set.MIN_COOKING_TIME
+    )
 
     class Meta:
         model = Recipe
@@ -127,9 +128,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         names = []
         for ingredient in data:
-            ingredient_name = ingredient.get('ingredient', {}
-                                             ).get('id', {}
-                                                   ).get('name')
+            ingredient_name = ingredient.get(
+                'ingredient', {},
+            ).get(
+                'id', {},
+            ).get('name')
             if ingredient_name:
                 names.append(ingredient_name)
 
