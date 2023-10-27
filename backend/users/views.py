@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from recipe.models import Recipe
 from users.models import User
-from api.serializers import RecipeReadSerializer
+# from api.serializers import RecipeReadSerializer
 from users.serializers import (UserSerializer, SubscriptionUserSerializer,
                                FollowSerializer)
 
@@ -58,8 +58,8 @@ class SubscribeView(APIView):
 
 
 class UserRecipesView(ListAPIView):
-    serializer_class = RecipeReadSerializer
+    serializer_class = UserSerializer
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs['pk'])
-        return Recipe.objects.filter(author=user)
+        return User.objects.filter(author=user,)

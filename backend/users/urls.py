@@ -1,6 +1,6 @@
 from django.urls import include, path, re_path
 from rest_framework import routers
-from users.views import SubscribeView, SubscribeListViewSet, UserRecipesView
+from users.views import SubscribeView, SubscribeListViewSet
 
 router = routers.DefaultRouter()
 
@@ -10,6 +10,7 @@ router.register(
     basename='subscriptions'
 )
 
+app_name = 'users'
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -18,5 +19,4 @@ urlpatterns = [
     path('users/<int:pk>/subscribe/',
          SubscribeView.as_view(), name='subscribe'
          ),
-    path('users/<int:pk>/', UserRecipesView.as_view(), name='author-detail'),
 ]
