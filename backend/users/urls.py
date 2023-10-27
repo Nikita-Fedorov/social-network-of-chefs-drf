@@ -10,8 +10,6 @@ router.register(
     basename='subscriptions'
 )
 
-app_name = 'users'
-
 urlpatterns = [
     path('', include(router.urls)),
     re_path(r'^auth/', include('djoser.urls.authtoken')),
