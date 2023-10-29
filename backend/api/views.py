@@ -2,8 +2,6 @@ from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                           ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
@@ -17,6 +15,8 @@ from api.pagination import RecipePagination
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeReadSerializer, RecipeWriteSerializer,
                              TagSerializers)
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
 
 
 class IngridientViewSet(viewsets.ModelViewSet):

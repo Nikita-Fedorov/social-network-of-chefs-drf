@@ -1,117 +1,60 @@
-# from django.shortcuts import get_object_or_404
-# from rest_framework import status, viewsets
-# from rest_framework.views import APIView
-# from rest_framework.permissions import IsAuthenticated
-# from rest_framework.response import Response
-
-# from .models import User
-# from users.serializers import (UserSerializer, SubscriptionUserSerializer,
-#                                FollowSerializer)
-
-
-# class SubscribeListViewSet(viewsets.ModelViewSet):
-#     serializer_class = SubscriptionUserSerializer
-
-#     def get_queryset(self):
-#         return User.objects.filter(following__user=self.request.user)
-
-
-# class SubscribeView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, pk):
-#         serializer = FollowSerializer(
-#             data={'user': request.user.id, 'author': pk},
-#             context={'request': request}
-#         )
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(UserSerializer(
-#             get_object_or_404(User, pk=pk),
-#             context={'request': request}).data,
-#             status=status.HTTP_201_CREATED
-#         )
-
-#     def delete(self, request, pk):
-#         user_to_sub = get_object_or_404(User, pk=pk)
-#         user = request.user
-
-#         user_follows = user_to_sub.follower.filter(author=user)
-
-#         if user_follows.exists():
-#             user_follows.delete()
-#             user_to_modify_serializer = UserSerializer(
-#                 user_to_sub,
-#                 context={'request': request}
-#             )
-#             return Response(
-#                 user_to_modify_serializer.data,
-#                 status=status.HTTP_204_NO_CONTENT
-#             )
-#         return Response(
-#             {'Ошибка отписки: пользователь не был подписан'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from djoser.views import UserViewSet
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from users.serializers import UserSerializer, SubscriptionUserSerializer
 
-from .models import User, Follow
-
-
-class SubscribeListViewSet(viewsets.ModelViewSet):
-    serializer_class = SubscriptionUserSerializer
-
-    def get_queryset(self):
-        return User.objects.filter(following__user=self.request.user)
+from .models import Follow, User
+from users.serializers import (UserSerializer, SubscriptionUserSerializer)
 
 
-class SubscribeView(APIView):
-    permission_classes = [IsAuthenticated]
+class UserView(UserViewSet):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = UserSerializer
 
-    def post(self, request, pk):
-        user_to_sub = get_object_or_404(User, pk=pk)
-        user = request.user
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def subscriptions(self, request):
+        return self.get_paginated_response(
+            SubscriptionUserSerializer(
+                self.paginate_queryset(
+                    User.objects.filter(following__user=request.user)
+                ),
+                many=True,
+                context={'request': request},
+            ).data
+        )
 
-        if user != user_to_sub:
-            if not Follow.objects.filter(
-                user=user, author=user_to_sub
-            ).exists():
-                Follow.objects.create(user=user, author=user_to_sub)
-                user_to_modify_serializer = UserSerializer(
-                    user_to_sub, context={'request': request}
-                )
-                return Response(user_to_modify_serializer.data,
-                                status=status.HTTP_201_CREATED
-                                )
-            else:
-                return Response({'error': 'Пользователь уже подписан'},
-                                status=status.HTTP_400_BAD_REQUEST
-                                )
-        else:
-            return Response({'error': 'Нельзя подписаться на самого себя'},
-                            status=status.HTTP_400_BAD_REQUEST
-                            )
-
-    def delete(self, request, pk):
-        user_to_sub = get_object_or_404(User, pk=pk)
-        user = request.user
-
-        if Follow.objects.filter(user=user, author=user_to_sub).exists():
-            Follow.objects.filter(user=user, author=user_to_sub).delete()
-            user_to_modify_serializer = UserSerializer(
-                user_to_sub,
-                context={'request': request}
-            )
-            return Response(user_to_modify_serializer.data,
-                            status=status.HTTP_204_NO_CONTENT
-                            )
-        else:
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
+    )
+    def subscribe(self, request, id):
+        follow, created = Follow.objects.get_or_create(
+            user=request.user,
+            author_id=id
+        )
+        if created:
             return Response(
-                {'Ошибка отписки: пользователь не был подписан'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'detail': 'Вы подписались на пользователя'},
+                status=status.HTTP_201_CREATED
             )
+        return Response(
+            {'detail': 'Вы уже подписаны на пользователя'},
+            status=status.HTTP_200_OK
+        )
+
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request, id):
+        follow = get_object_or_404(Follow, user=request.user, author=id)
+        follow.delete()
+        return Response(
+            {'detail': 'Вы отписались от пользователя'},
+            status=status.HTTP_204_NO_CONTENT
+        )

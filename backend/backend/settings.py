@@ -6,7 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'foodgram-blog.sytes.net', '84.252.142.255']
 
@@ -126,7 +127,6 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    'USER_ID_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
         'user_create': 'djoser.serializers.UserCreateSerializer',
