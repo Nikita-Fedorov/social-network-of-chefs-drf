@@ -15,7 +15,8 @@ admin
 
 ## Как запустить проект на сервере:
 - Клонировать репозиторий:
-git clone git@github.com:Nikita-Fedorov/foodgram-project-react.git
+
+    git clone git@github.com:Nikita-Fedorov/foodgram-project-react.git
 
 - В репозитории на GitHub перейдите в раздел "Settings", затем перейдите в раздел "Secrets and Variables". Затем нажмите на кнопку "Actions" и добавьте следующие секреты:
 
@@ -27,7 +28,7 @@ SSH_PASSPHRASE=<passphrase>
 
 Создайте файл .env на сервере
 
-sudo nano .env
+    sudo nano .env
 
 Добавить в него:
 
@@ -42,39 +43,39 @@ sudo nano .env
 
 Создайте файл конфигураций Nginx:
 
-sudo nano /etc/nginx/sites-enabled/default
+    sudo nano /etc/nginx/sites-enabled/default
 
 Добавьте в файл следующий код:
 
-server {
-    server_name foodgram-blog.sytes.net;
-    server_tokens off;
-
-    location / {
-        proxy_set_header        Host $http_host;
-        proxy_set_header        X-Real-IP $remote_addr;
-        proxy_set_header        X-Forwarded-Proto $scheme;
-        proxy_pass              http://backend:8080;
+    server {
+        server_name foodgram-blog.sytes.net;
+        server_tokens off;
+        
+        location / {
+            proxy_set_header        Host $http_host;
+            proxy_set_header        X-Real-IP $remote_addr;
+            proxy_set_header        X-Forwarded-Proto $scheme;
+            proxy_pass              http://backend:8080;
+        }
     }
-}
 
 Если у Вас не установлен докер, установите его:
 
 https://eternalhost.net/base/vps-vds/ustanovka-docker-linux
 
-## Запуск пректа
+## Запуск проекта
 
 В терминале на вкладке 'foodgram-project-react' выполните команды:
 
-git add .
-git commit -m ''
-git push
+    git add .
+    git commit -m ''
+    git push
 
 ### Затем перейдите на сервер и выполните следующие команды:
 
 Создайте суперюзера для создания Tags (тэгов) для рецептов:
 
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 
 
 ## Технологии
